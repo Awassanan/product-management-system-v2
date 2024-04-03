@@ -1,8 +1,8 @@
-# My Inventory Web Application
+# My Inventory Web Application Version 2
 
-This is an inventory web application created using HTML5, CSS3, JavaScript, and the Bootstrap Framework. It enables users to manage their inventory by viewing all products, adding new products, updating existing products, and deleting products.
+This is an updated version of my inventory web application created using HTML5, CSS3, JavaScript, and the Bootstrap Framework. It enables users to manage their inventory by viewing all products, adding new products, updating existing products, and deleting products.
 
-This project is designed to run locally only. Before using it, please clone the repository. It's recommended to start by running server.js, followed by launching the web app with a live server extension.
+The update involves transitioning from storing data in an Array of Objects to utilizing a MongoDB server locally. Therefore, before using it, please clone the repository. It's recommended to start by running server.js, followed by launching the web app with a live server extension.
 
 This project is part of Dev Init #2 by borntoDev, aiming to create a product management system using Node.js and Express.
 
