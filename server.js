@@ -1,69 +1,126 @@
 const express = require('express');
+const mongoose = require('mongoose');
+
 const app = express();
-const port = 3000;
 
-const products = [
-    { id: 1, name: 'Laptop', category: 'Electronics', price: 1000, stock: 5 },
-    { id: 2, name: 'Phone', category: 'Electronics', price: 500, stock: 10 },
-];
+// ติดต่อ MongoDB
+mongoose.connect('mongodb://localhost:27017/productDB', { useNewUrlParser: true, useUnifiedTopology: true });
 
-// ---- Middleware ----
+// สร้าง Schema และ Model
+const productSchema = new mongoose.Schema({
+    _id: Number,
+    name: String,
+    category: String,
+    price: Number,
+    stock: Number
+});
+
+const Product = mongoose.model('Product', productSchema);
+
+// Middleware
+
+// Middleware for logging
 app.use((req, res, next) => {
     console.log(`${req.method} request for ${req.url}`);
     next();
 });
 
-// Middleware for parsing JSON
+// Middleware using JSON
 app.use(express.json());
 
-// ---- Routing ----
-// GET all products
-app.get('/products', (req, res) => {
-    res.json(products);
-});
-
-// GET a single product by ID
-app.get('/products/:id', (req, res) => {
-    const product = products.find(p => p.id === parseInt(req.params.id));
-    if (!product) return res.status(404).send('Product not found');
-    res.json(product);
-});
-
-// POST a new product
+// Add product
 app.post('/products', (req, res) => {
-    const newProduct = {
-        id: products.length + 1,
-        name: req.body.name,
-        category: req.body.category,
-        price: req.body.price,
-        stock: req.body.stock
-    };
-    products.push(newProduct);
-    res.json(newProduct);
+    const newProduct = new Product(req.body)
+
+    if (!req.body._id || !req.body.name || !req.body.category || !req.body.price || !req.body.stock) {
+        return res.status(400).send("Bad Request: Incomplete fields");
+    }
+
+    newProduct.save()
+        .then((savedProduct) => {
+            res.status(201).send(savedProduct);
+        })
+        .catch((err) => {
+            if (err.code === 11000) { // Duplicate key error code: E11000
+                res.status(400).send("Duplicate ID");
+            } else {
+                res.status(500).send("Internal Server Error");
+            }
+        });
 });
 
-// PUT to update product
+// Get Products
+app.get('/products', (req, res) => {
+    Product.find()
+        .then((products) => {
+            return res.status(200).send(products);
+        })
+        .catch((err) => {
+            console.error("Error fetching all products:", err);
+            res.status(500).send("Internal Server Error");
+        });
+});
+
+
+// Get Product By ID
+app.get('/products/:id', (req, res) => {
+    Product.findById(req.params.id)
+        .then((product) => {
+            if (!product) {
+                return res.status(404).send("Not Found: Product not found");
+            }
+            return res.status(200).send(product);
+        })
+        .catch((err) => {
+            console.error("Error finding product:", err);
+            res.status(500).send("Internal Server Error");
+        });
+})
+
+// Edit Product Details
 app.put('/products/:id', (req, res) => {
-    const product = products.find(p => p.id === parseInt(req.params.id));
-    if (!product) return res.status(404).send('Product not found');
-
-    product.name = req.body.name;
-    product.category = req.body.category;
-    product.price = req.body.price;
-    product.stock = req.body.stock;
-
-    res.json(product);
+    Product.updateOne({ _id: req.params.id }, req.body)
+        .then(Product.findById(req.params.id)
+            .then((product) => {
+                if (!product) {
+                    return res.status(404).send("Not Found: Product not found");
+                } else if (!req.body._id || !req.body.name || !req.body.category || !req.body.price || !req.body.stock) {
+                    return res.status(400).send("Bad Request: Incomplete fields");
+                }
+                console.log("Updated Successfully")
+                return res.status(200).send(req.body);
+            })
+            .catch((err) => {
+                console.error("Error finding product:", err);
+                res.status(500).send("Internal Server Error");
+            }))
+        .catch((err) => {
+            console.error("Error updating product:", err);
+            res.status(500).send("Internal Server Error");
+        });
 });
 
-// DELETE product
+// Delete product
 app.delete('/products/:id', (req, res) => {
-    const productIndex = products.findIndex(p => p.id === parseInt(req.params.id));
-    if (productIndex === -1) return res.status(404).send('Product not found');
-
-    const deletedProduct = products.splice(productIndex, 1);
-    res.json(deletedProduct);
+    Product.deleteOne({ _id: req.params.id })
+        .then(Product.findById(req.params.id)
+            .then((product) => {
+                if (!product) {
+                    return res.status(404).send("Not Found: Product not found");
+                }
+                return res.status(200).send("Deleted successfully");
+            })
+            .catch((err) => {
+                console.error("Error finding product:", err);
+                res.status(500).send("Internal Server Error");
+            }))
+        .catch((err) => {
+            console.error("Error deleting product:", err);
+            res.status(500).send("Internal Server Error");
+        });
 });
 
-app.listen(port, () => {
-    console.log(`Server running at <http://localhost>:${port}/`);
+// Run server at port 3000
+app.listen(3000, () => {
+    console.log('Server is running on port 3000');
 });
