@@ -1,0 +1,30 @@
+.inventory-wrapper, #heading{
+    margin: 2rem;
+}
+
+#add-product-button{
+    border-radius: 16px;
+    background-color: lightgreen;
+    padding: 8px;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+}
+
+.input-group input {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group button {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    padding: 0.375rem 1rem;
+    min-height: calc(1.5em + 0.75rem + 2px);
+}
+
+#add-product-button {
+    white-space: nowrap;
+}
